@@ -8,8 +8,8 @@ function alert(msg){
 
 socket.onopen = function(e) {
   alert("[open] Connection established");
-  alert("Sending to server");
-  socket.send("My name is John");
+  //alert("Sending to server");
+  //socket.send("Sky_Message");
 };
 
 socket.onmessage = function(event) {
