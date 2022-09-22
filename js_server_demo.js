@@ -22,8 +22,19 @@ function accept(req, res) {
 function onConnect(ws) {
   ws.on('message', function (message) {
     message = message.toString();
+
+    if(message === "Designer_Message"){
+      console.log("Got message from Firework Designer");
+    }
+
+    if(message === "Sky_Message"){
+      console.log("Got message from Sky");
+    }
+
+
+    /*
     let name = message.match(/([\p{Alpha}\p{M}\p{Nd}\p{Pc}\p{Join_C}]+)$/gu) || "Guest";
-    ws.send(`Hello from server, ${name}!`);
+    ws.send(`Hello from server, ${name}!`);*/
 
     setTimeout(() => ws.close(1000, "Bye!"), 5000);
   });
