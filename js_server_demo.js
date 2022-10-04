@@ -4,24 +4,32 @@ const ws = require('ws');
 const wss = new ws.Server({noServer: true});
 
 function accept(req, res) {
+  console.log("Incomming connection");
+
   // all incoming requests must be websockets
   if (!req.headers.upgrade || req.headers.upgrade.toLowerCase() != 'websocket') {
+    console.log("Connection rejected because it is not a websocket");
     res.end();
     return;
   }
 
   // can be Connection: keep-alive, Upgrade
   if (!req.headers.connection.match(/\bupgrade\b/i)) {
+    console.log("Non upgradable connection");
     res.end();
     return;
   }
 
+  console.log("...accepting connection");
   wss.handleUpgrade(req, req.socket, Buffer.alloc(0), onConnect);
 }
 
 function onConnect(ws) {
   ws.on('message', function (message) {
     message = message.toString();
+    console.log("Got message:"){
+      console.log(message);
+    }
 
     if(message === "Designer_Message"){
       console.log("Got message from Firework Designer");
