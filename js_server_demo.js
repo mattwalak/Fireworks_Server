@@ -27,9 +27,8 @@ function accept(req, res) {
 function onConnect(ws) {
   ws.on('message', function (message) {
     message = message.toString();
-    console.log("Got message:"){
-      console.log(message);
-    }
+    console.log("Got message:");
+    console.log(message);
 
     if(message === "Designer_Message"){
       console.log("Got message from Firework Designer");
