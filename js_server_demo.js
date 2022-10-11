@@ -1,10 +1,65 @@
 activeSky = null;
-
+activeSkyAspect = -1;
 
 const http = require('http');
 const ws = require('ws');
-
 const wss = new ws.Server({noServer: true});
+
+// ------------------  RESPONSE FUNCTIONS  -----------------------------
+
+function sendRequestSkyDimensionsResponse(DesignerWs){
+  msgObj = {
+    source: "Server",
+    command: "RequestSkyAspectResponse",
+    skyAspect: activeSkyAspect
+  };
+
+  DesignerWs.send(JSON.stringify(msgObj));
+};
+
+function deliverFirework(msgObj){
+  if(activeSky != null){
+    msgObj.source = "Server";
+    msgObj.command = "DeliverFirework";
+    activeSky.send(JSON.stringify(msgObj));
+  }else{
+    console.log("ERROR - No active sky");
+  }
+}
+
+// ------------------  MESSAGE PROCESSING  -----------------------------
+
+function processDesignerMessage(msgObj, DesignerWs){
+  switch(msgObj.command){
+    case "RequestSkyAspect":
+      console.log("Designer:RequestSkyAspect");
+      sendRequestSkyDimensionsResponse(DesignerWs);
+      break;
+    case "SendFirework":
+      console.log("Designer:SendFirework");
+      deliverFirework(msgObj);
+      break;
+    default:
+      console.log(`Designer: Unknown message = ${msg}`);
+  }
+}
+
+function processSkyMessage(msgObj, SkyWs){
+  switch(msgObj.command){
+    case "OpenNewSky":
+      console.log("Sky:OpenNewSky")
+      activeSky = SkyWs;
+      activeSkyAspect = msgObj.skyAspect;
+      break;
+    case "PantsOptional":
+      console.log("Sky:PantsOptional");
+      break;
+    default:
+      console.log(`Sky: Unknown message = ${msg}`);
+  }
+}
+
+// -------------------  WEB SOCKET STUFF ---------------------------------
 
 function accept(req, res) {
   // all incoming requests must be websockets
@@ -21,46 +76,29 @@ function accept(req, res) {
     return;
   }
 
-  console.log("...accepting new connection");
   wss.handleUpgrade(req, req.socket, Buffer.alloc(0), onConnect);
 }
 
-function processDesignerMessage(ws, msg){
-  if(activeSky != null){
-    console.log("Designer: sending message to sky");
-    activeSky.send(msg);
-  }else{
-    console.log("Designer: no active sky");
-  }
-}
-
-function processSkyMessage(ws, msg){
-  if(msg === "setAsActiveSky"){
-    console.log("Sky: Setting this instance as active")
-    activeSky = ws;
-  }else{
-    console.log(`Sky: Unknown message = ${msg}`);
-  }
-}
-
-
 function onConnect(ws) {
+  console.log("New Connection Established!")
+
   ws.on('message', function (message) {
-    console.log(`Got message ${message}`);
-    message = message.toString();
-    colon_i = message.indexOf(':');
-    if(colon_i < 0){
-      console.log(`Tossing message = ${message}; No delimiter`);
-    }else{
-      prefix = message.substring(0, colon_i);
-      data = message.substring(colon_i + 1, message.length)
-      if(prefix === "sky"){
-        processSkyMessage(ws, data);
-      }else if(prefix === "designer"){
-        processDesignerMessage(ws, data);
-      }else{
-        console.log(`Tossing message, unknown prefix = ${prefix}`)
+    console.log(`Got message: ${message}`);
+
+    try{
+      msgObj = JSON.parse(message.toString());
+      switch(msgObj.source){
+        case "Sky":
+          processSkyMessage(msgObj, ws);
+          break;
+        case "Designer":
+          processDesignerMessage(msgObj, ws);
+          break;
+        default:
+          console.log(`Unknown source in message: ${message}`);
       }
+    }catch(e){
+      console.log(`Can't parse message: ${message}`);
     }
   });
 }
