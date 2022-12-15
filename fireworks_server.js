@@ -59,7 +59,7 @@ function processSkyMessage(msgObj, SkyWs){
   }
 }
 
-// -------------------  WEB SOCKET STUFF ---------------------------------
+// -------------------- WEB SOCKET STUFF ---------------------------------
 
 function accept(req, res) {
   // all incoming requests must be websockets
